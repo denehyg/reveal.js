@@ -240,6 +240,7 @@
 		currentSlide,
 
 		previousBackground,
+		previousStackBackground,
 
 		// Remember which directions that the user has navigated towards
 		hasNavigatedRight = false,
@@ -3065,6 +3066,7 @@
 	function updateBackground( includeAll ) {
 
 		var currentBackground = null;
+		var currentStackBackground = null;
 
 		// Reverse past/future classes when in RTL mode
 		var horizontalPast = config.rtl ? 'future' : 'past',
@@ -3092,7 +3094,11 @@
 			}
 
 			if( includeAll || h === indexh ) {
-				toArray( backgroundh.querySelectorAll( '.slide-background' ) ).forEach( function( backgroundv, v ) {
+				var verticalSlides = toArray( backgroundh.querySelectorAll( '.slide-background' ) );
+				if (h === indexh && verticalSlides.length > 0) {
+					currentStackBackground = backgroundh;
+				}
+				verticalSlides.forEach( function( backgroundv, v ) {
 
 					backgroundv.classList.remove( 'past' );
 					backgroundv.classList.remove( 'present' );
@@ -3115,6 +3121,28 @@
 			}
 
 		} );
+
+		if( currentStackBackground !== previousStackBackground ) {
+
+			// Stop content inside of previous stack background
+			stopEmbeddedContent( previousStackBackground );
+
+			// Start content in the current stack background
+			if (currentStackBackground) {
+				startEmbeddedContent( currentStackBackground );
+
+				var backgroundImageURL = currentStackBackground.style.backgroundImage || '';
+	
+				// Restart GIFs (doesn't work in Firefox)
+				if( /\.gif/i.test( backgroundImageURL ) ) {
+					currentStackBackground.style.backgroundImage = '';
+					window.getComputedStyle( currentStackBackground ).opacity;
+					currentStackBackground.style.backgroundImage = backgroundImageURL;
+				}
+			}
+
+			previousStackBackground = currentStackBackground;
+		}
 
 		// Stop content inside of previous backgrounds
 		if( previousBackground ) {
